@@ -7,13 +7,11 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>2.1.2.RELEASE</version>
-		<relativePath /> <!-- lookup parent from repository -->
+		<relativePath />
 	</parent>
-	<groupId>com.javatechie</groupId>
 	<artifactId>spring-boot-websocket</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>spring-boot-websocket</name>
-	<description>Develop a chat application using spring boot and web socket</description>
 
 	<properties>
 		<java.version>1.8</java.version>
@@ -44,7 +42,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.30</version> <!-- Use the latest version -->
+			<version>1.18.30</version>
 			<scope>provided</scope>
 		</dependency>
 
