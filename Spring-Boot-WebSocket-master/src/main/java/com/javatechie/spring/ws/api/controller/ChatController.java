@@ -1,64 +1,57 @@
 package com.javatechie.spring.ws.api.controller;
 
 import com.javatechie.spring.ws.api.model.ChatMessage;
+import com.javatechie.spring.ws.api.repository.ChatMessageRepository;
 import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-import javax.annotation.PreDestroy;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Controller
 public class ChatController {
 
+	private final ConcurrentHashMap<String, CopyOnWriteArrayList<ChatMessage>> chatHistory = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<String, CopyOnWriteArrayList<String>> activeChats = new ConcurrentHashMap<>();
+	private final ChatMessageRepository chatMessageRepository;
+	private final SimpMessagingTemplate messagingTemplate;
+
+	public ChatController(ChatMessageRepository chatMessageRepository, SimpMessagingTemplate messagingTemplate) {
+		this.chatMessageRepository = chatMessageRepository;
+		this.messagingTemplate = messagingTemplate;
+	}
 
 	@MessageMapping("/chat/{chatId}/register")
-	@SendTo("/topic/{chatId}")
-	public ChatMessage registerUserToChat(
+	public void registerUserToChat(
 			@Payload ChatMessage chatMessage,
 			SimpMessageHeaderAccessor headerAccessor,
 			@DestinationVariable String chatId) {
 
-		String username = chatMessage.getSender();
+		activeChats.computeIfAbsent(chatId, k -> new CopyOnWriteArrayList<>()).addIfAbsent(chatMessage.getSender());
+		headerAccessor.getSessionAttributes().put("username", chatMessage.getSender());
+		headerAccessor.getSessionAttributes().put("chatId", chatId);
 
-		synchronized (activeChats) {
-			if (!activeChats.containsKey(chatId) && !activeChats.isEmpty()) {
-				throw new IllegalArgumentException("Chat ID mismatch. Cannot join this chat.");
-			}
+		sendChatHistoryToUser(chatId, headerAccessor.getSessionId());
 
-			activeChats.putIfAbsent(chatId, new CopyOnWriteArrayList<>());
-			CopyOnWriteArrayList<String> users = activeChats.get(chatId);
-
-			if (!users.contains(username)) {
-				users.add(username);
-			}
-
-			headerAccessor.getSessionAttributes().put("username", username);
-			headerAccessor.getSessionAttributes().put("chatId", chatId);
-
-			chatMessage.setType(ChatMessage.MessageType.JOIN);
-			return chatMessage;
-		}
+		chatMessage.setType(ChatMessage.MessageType.JOIN);
+		messagingTemplate.convertAndSend("/topic/" + chatId, chatMessage);
 	}
 
 	@MessageMapping("/chat/{chatId}/send")
-	@SendTo("/topic/{chatId}")
-	public ChatMessage sendMessageToChat(
-			@Payload ChatMessage chatMessage,
-			SimpMessageHeaderAccessor headerAccessor,
-			@DestinationVariable String chatId) {
-		String sessionChatId = (String) headerAccessor.getSessionAttributes().get("chatId");
-		if (!chatId.equals(sessionChatId)) {
-			throw new IllegalArgumentException("Chat ID mismatch. Cannot send messages.");
-		}
+	public void sendMessageToChat(@Payload ChatMessage chatMessage, @DestinationVariable String chatId) {
+		chatHistory.computeIfAbsent(chatId, k -> new CopyOnWriteArrayList<>()).add(chatMessage);
+		chatMessageRepository.save(chatMessage);
 
-		return chatMessage;
+		messagingTemplate.convertAndSend("/topic/" + chatId, chatMessage);
 	}
 
-	@MessageExceptionHandler(IllegalArgumentException.class)
-	public void handleChatError(IllegalArgumentException ex) {
-		System.err.println("Error: " + ex.getMessage());
+	private void sendChatHistoryToUser(String chatId, String sessionId) {
+		if (chatHistory.containsKey(chatId)) {
+			CopyOnWriteArrayList<ChatMessage> history = chatHistory.get(chatId);
+
+			messagingTemplate.convertAndSendToUser(sessionId, "/queue/history", history);
+		}
 	}
 }

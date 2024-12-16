@@ -37,6 +37,9 @@ function onConnected(chatId) {
     // Subscribe to the specific chat topic
     stompClient.subscribe(`/topic/${chatId}`, onMessageReceived);
 
+    // Subscribe to private user queue for history
+    stompClient.subscribe('/user/queue/history', onChatHistoryReceived);
+
     // Notify the server about joining the chat
     stompClient.send(`/app/chat/${chatId}/register`, {}, JSON.stringify({
         sender: username,
@@ -46,10 +49,11 @@ function onConnected(chatId) {
     connectingElement.classList.add('hidden');
 }
 
-function onError(error) {
-    console.error('WebSocket Error:', error);
-    connectingElement.textContent = 'Could not connect to WebSocket server. Please refresh this page to try again!';
-    connectingElement.style.color = 'red';
+function onChatHistoryReceived(payload) {
+    const history = JSON.parse(payload.body);
+    history.forEach(message => {
+        displayMessage(message);
+    });
 }
 
 function send(event) {
@@ -70,7 +74,10 @@ function send(event) {
 
 function onMessageReceived(payload) {
     var message = JSON.parse(payload.body);
+    displayMessage(message);
+}
 
+function displayMessage(message) {
     var messageElement = document.createElement('li');
 
     if (message.type === 'JOIN') {
