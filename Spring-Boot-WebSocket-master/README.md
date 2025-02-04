@@ -2,7 +2,6 @@
 
  * @author Valdeta Demiri
  * Created: 2025
- * Programming Language: Java
  * IDE: IntelliJ
 
 # Prerequisites
