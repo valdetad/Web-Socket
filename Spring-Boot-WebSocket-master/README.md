@@ -18,12 +18,12 @@ WebSocket Chat Application is a real-time chat system using Spring Boot WebSocke
 
 # Key Features
 
-*✅ Real-time WebSocket chat
-*✅ STOMP-based messaging system
-*✅ Multiple chat rooms support
-*✅ Chat history stored in MySQL
-*✅ User join/leave notifications
-*✅ Frontend built with HTML, CSS, and JavaSc
+* ✅ Real-time WebSocket chat
+* ✅ STOMP-based messaging system
+* ✅ Multiple chat rooms support
+* ✅ Chat history stored in MySQL
+* ✅ User join/leave notifications
+* ✅ Frontend built with HTML, CSS, and JavaSc
 
 
 # API Features
