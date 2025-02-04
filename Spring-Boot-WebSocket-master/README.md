@@ -41,20 +41,4 @@ WebSocket Chat Application is a real-time chat system using Spring Boot WebSocke
 * Messages are exchanged in real-time using WebSockets.
 * Frontend uses SockJS & STOMP.js for WebSocket communication.
 
-# Project Structure
-
-src/main/java/com/javatechie/spring/ws/api/
-│── config/
-│   ├── WsConfig.java  -> WebSocket configuration class
-│── controller/
-│   ├── ChatController.java -> Handles WebSocket messages & user registration
-│── model/
-│   ├── ChatMessage.java -> Entity representing a chat message
-│── repository/
-│   ├── ChatMessageRepository.java -> JPA repository for chat messages
-│── resources/
-│   ├── static/ -> Frontend (HTML, CSS, JavaScript)
-│── application.yml -> Database and server configurations
-
-
 # Screenshots
